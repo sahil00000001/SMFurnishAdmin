@@ -97,7 +97,6 @@ export default function ProductTable({ products, isLoading, onEdit, onDelete }: 
                         <p className="font-medium text-card-foreground" data-testid={`product-name-${product.id}`}>
                           {product.name}
                         </p>
-                        <p className="text-sm text-muted-foreground">SKU: {product.sku}</p>
                       </div>
                     </div>
                   </TableCell>
@@ -120,22 +119,22 @@ export default function ProductTable({ products, isLoading, onEdit, onDelete }: 
                   <TableCell>
                     <div className="flex space-x-2">
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         onClick={() => onEdit(product)}
-                        className="text-primary hover:text-primary/80"
+                        className="h-8 w-8 p-0 border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-400 dark:hover:bg-blue-900"
                         data-testid={`button-edit-${product.id}`}
                       >
-                        <i className="fas fa-edit"></i>
+                        <i className="fas fa-edit text-sm"></i>
                       </Button>
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         onClick={() => onDelete(product)}
-                        className="text-destructive hover:text-destructive/80"
+                        className="h-8 w-8 p-0 border-red-200 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400 dark:hover:bg-red-900"
                         data-testid={`button-delete-${product.id}`}
                       >
-                        <i className="fas fa-trash"></i>
+                        <i className="fas fa-trash text-sm"></i>
                       </Button>
                     </div>
                   </TableCell>

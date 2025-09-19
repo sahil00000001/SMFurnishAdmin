@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { productsApi } from "@/lib/api";
+import { productsApi, categoriesApi } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -22,10 +22,15 @@ export default function Products() {
     queryFn: productsApi.getAll,
   });
 
+  // Fetch categories for filtering
+  const { data: categories = [] } = useQuery({
+    queryKey: ["/api/categories"],
+    queryFn: categoriesApi.getAll,
+  });
+
   const filteredProducts = products.filter((product: any) => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.sku.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = !categoryFilter || categoryFilter === "all" || product.category === categoryFilter;
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = !categoryFilter || categoryFilter === "all" || product.categoryName === categoryFilter;
     const matchesStatus = !statusFilter || statusFilter === "all" || 
                          (statusFilter === "in-stock" && product.stock > 5) ||
                          (statusFilter === "low-stock" && product.stock <= 5 && product.stock > 0) ||
@@ -84,10 +89,11 @@ export default function Products() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
-              <SelectItem value="Living Room">Living Room</SelectItem>
-              <SelectItem value="Bedroom">Bedroom</SelectItem>
-              <SelectItem value="Dining Room">Dining Room</SelectItem>
-              <SelectItem value="Office">Office</SelectItem>
+              {categories.map((category: any) => (
+                <SelectItem key={category.id} value={category.name}>
+                  {category.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>

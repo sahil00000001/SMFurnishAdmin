@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { productsApi } from "@/lib/api";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { productsApi, categoriesApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,8 +18,8 @@ interface AddProductModalProps {
 export default function AddProductModal({ isOpen, onClose, product }: AddProductModalProps) {
   const [formData, setFormData] = useState({
     name: "",
-    sku: "",
-    category: "",
+    categoryId: "",
+    categoryName: "",
     price: "",
     stock: "",
     status: "active",
@@ -29,6 +29,12 @@ export default function AddProductModal({ isOpen, onClose, product }: AddProduct
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Fetch categories
+  const { data: categories = [] } = useQuery({
+    queryKey: ["/api/categories"],
+    queryFn: categoriesApi.getAll,
+  });
 
   const createMutation = useMutation({
     mutationFn: productsApi.create,
@@ -72,8 +78,8 @@ export default function AddProductModal({ isOpen, onClose, product }: AddProduct
     if (product) {
       setFormData({
         name: product.name || "",
-        sku: product.sku || "",
-        category: product.category || "",
+        categoryId: product.categoryId || "",
+        categoryName: product.categoryName || "",
         price: product.price || "",
         stock: product.stock?.toString() || "",
         status: product.status || "active",
@@ -83,8 +89,8 @@ export default function AddProductModal({ isOpen, onClose, product }: AddProduct
     } else {
       setFormData({
         name: "",
-        sku: "",
-        category: "",
+        categoryId: "",
+        categoryName: "",
         price: "",
         stock: "",
         status: "active",
@@ -98,9 +104,13 @@ export default function AddProductModal({ isOpen, onClose, product }: AddProduct
     e.preventDefault();
     
     const data = {
-      ...formData,
+      name: formData.name,
+      description: formData.description,
       price: parseFloat(formData.price),
       stock: parseInt(formData.stock),
+      categoryId: formData.categoryId,
+      imageUrl: formData.imageUrl,
+      status: formData.status,
     };
 
     if (product) {
@@ -112,6 +122,15 @@ export default function AddProductModal({ isOpen, onClose, product }: AddProduct
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleCategoryChange = (categoryId: string) => {
+    const selectedCategory = categories.find((cat: any) => cat.id === categoryId);
+    setFormData(prev => ({
+      ...prev,
+      categoryId: categoryId,
+      categoryName: selectedCategory?.name || ""
+    }));
   };
 
   return (
@@ -137,31 +156,21 @@ export default function AddProductModal({ isOpen, onClose, product }: AddProduct
               />
             </div>
             
-            <div>
-              <Label htmlFor="productSKU">SKU</Label>
-              <Input
-                id="productSKU"
-                value={formData.sku}
-                onChange={(e) => handleChange("sku", e.target.value)}
-                required
-                placeholder="Enter SKU"
-                data-testid="input-product-sku"
-              />
-            </div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <Label htmlFor="productCategory">Category</Label>
-              <Select value={formData.category} onValueChange={(value) => handleChange("category", value)}>
+              <Select value={formData.categoryId} onValueChange={handleCategoryChange}>
                 <SelectTrigger data-testid="select-product-category">
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Living Room">Living Room</SelectItem>
-                  <SelectItem value="Bedroom">Bedroom</SelectItem>
-                  <SelectItem value="Dining Room">Dining Room</SelectItem>
-                  <SelectItem value="Office">Office</SelectItem>
+                  {categories.map((category: any) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

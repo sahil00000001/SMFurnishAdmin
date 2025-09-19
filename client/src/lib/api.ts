@@ -23,60 +23,6 @@ export async function apiRequest(
   return res;
 }
 
-// Transform external API product to our format
-function transformProduct(product: any) {
-  return {
-    id: product._id,
-    name: product.name,
-    sku: product._id, // Use _id as SKU since external API doesn't have SKU
-    description: product.description || null,
-    price: product.price?.toString() || "0",
-    category: "Living Room", // Default category since external API uses categoryId
-    stock: product.stock || 0,
-    status: "active",
-    imageUrl: product.imageUrl || null,
-    createdAt: product.createdAt ? new Date(product.createdAt) : null,
-    updatedAt: product.updatedAt ? new Date(product.updatedAt) : null,
-  };
-}
-
-export const productsApi = {
-  getAll: () => apiRequest("GET", "/api/products")
-    .then(res => res.json())
-    .then(response => response.data?.map(transformProduct) || []),
-  getById: (id: string) => apiRequest("GET", `/api/products/${id}`)
-    .then(res => res.json())
-    .then(response => response.data ? transformProduct(response.data) : null),
-  create: (data: any) => {
-    // Transform our format to external API format
-    const externalData = {
-      name: data.name,
-      description: data.description,
-      price: parseFloat(data.price),
-      stock: data.stock,
-      categoryId: "68ca8bd5880d3aaa80cebea5" // Default category ID from API
-    };
-    return apiRequest("POST", "/api/products", externalData)
-      .then(res => res.json())
-      .then(response => response.data ? transformProduct(response.data) : null);
-  },
-  update: (id: string, data: any) => {
-    // Transform our format to external API format
-    const externalData = {
-      name: data.name,
-      description: data.description,
-      price: parseFloat(data.price),
-      stock: data.stock,
-      categoryId: "68ca8bd5880d3aaa80cebea5" // Default category ID from API
-    };
-    return apiRequest("PUT", `/api/products/${id}`, externalData)
-      .then(res => res.json())
-      .then(response => response.data ? transformProduct(response.data) : null);
-  },
-  delete: (id: string) => apiRequest("DELETE", `/api/products/${id}`)
-    .then(res => res.json()),
-};
-
 // Transform external API category to our format
 function transformCategory(category: any) {
   return {
@@ -87,6 +33,78 @@ function transformCategory(category: any) {
     status: "active",
   };
 }
+
+// Transform external API product to our format
+function transformProduct(product: any, categories: any[] = []) {
+  const category = categories.find(cat => cat.id === product.categoryId);
+  return {
+    id: product._id,
+    name: product.name,
+    description: product.description || null,
+    price: product.price?.toString() || "0",
+    categoryId: product.categoryId,
+    categoryName: category?.name || "Unknown Category",
+    category: category?.name || "Unknown Category", // For backward compatibility
+    stock: product.stock || 0,
+    status: "active",
+    imageUrl: product.imageUrl || null,
+    createdAt: product.createdAt ? new Date(product.createdAt) : null,
+    updatedAt: product.updatedAt ? new Date(product.updatedAt) : null,
+  };
+}
+
+export const productsApi = {
+  getAll: async () => {
+    const [productsResponse, categoriesResponse] = await Promise.all([
+      apiRequest("GET", "/api/products").then(res => res.json()),
+      apiRequest("GET", "/api/categories").then(res => res.json())
+    ]);
+    const categories = categoriesResponse.data?.map(transformCategory) || [];
+    return productsResponse.data?.map((product: any) => transformProduct(product, categories)) || [];
+  },
+  getById: async (id: string) => {
+    const [productResponse, categoriesResponse] = await Promise.all([
+      apiRequest("GET", `/api/products/${id}`).then(res => res.json()),
+      apiRequest("GET", "/api/categories").then(res => res.json())
+    ]);
+    const categories = categoriesResponse.data?.map(transformCategory) || [];
+    return productResponse.data ? transformProduct(productResponse.data, categories) : null;
+  },
+  create: async (data: any) => {
+    // Use the categoryId from the form data
+    const externalData = {
+      name: data.name,
+      description: data.description,
+      price: parseFloat(data.price),
+      stock: data.stock,
+      categoryId: data.categoryId
+    };
+    const [productResponse, categoriesResponse] = await Promise.all([
+      apiRequest("POST", "/api/products", externalData).then(res => res.json()),
+      apiRequest("GET", "/api/categories").then(res => res.json())
+    ]);
+    const categories = categoriesResponse.data?.map(transformCategory) || [];
+    return productResponse.data ? transformProduct(productResponse.data, categories) : null;
+  },
+  update: async (id: string, data: any) => {
+    // Use the categoryId from the form data
+    const externalData = {
+      name: data.name,
+      description: data.description,
+      price: parseFloat(data.price),
+      stock: data.stock,
+      categoryId: data.categoryId
+    };
+    const [productResponse, categoriesResponse] = await Promise.all([
+      apiRequest("PUT", `/api/products/${id}`, externalData).then(res => res.json()),
+      apiRequest("GET", "/api/categories").then(res => res.json())
+    ]);
+    const categories = categoriesResponse.data?.map(transformCategory) || [];
+    return productResponse.data ? transformProduct(productResponse.data, categories) : null;
+  },
+  delete: (id: string) => apiRequest("DELETE", `/api/products/${id}`)
+    .then(res => res.json()),
+};
 
 export const categoriesApi = {
   getAll: () => apiRequest("GET", "/api/categories")
