@@ -120,3 +120,49 @@ export const categoriesApi = {
   delete: (id: string) => apiRequest("DELETE", `/api/categories/${id}`)
     .then(res => res.json()),
 };
+
+// Transform external API order to our format
+function transformOrder(order: any) {
+  return {
+    ...order, // Include any additional fields from the API first
+    // Then override with normalized fields to ensure consistency
+    id: order._id,
+    orderId: order.order_id,
+    customerName: order.customer_name,
+    customerEmail: order.customer_email || null,
+    customerPhone: order.customer_phone || null,
+    customerAddress: order.customer_address || null,
+    status: order.status || 'pending',
+    paymentStatus: order.payment_status || 'pending',
+    totalAmount: order.total_amount || 0,
+    orderDate: order.order_date ? new Date(order.order_date) : new Date(),
+    items: order.items || [],
+    notes: order.notes || null,
+    deliveryDate: order.delivery_date ? new Date(order.delivery_date) : null,
+    createdAt: order.created_at ? new Date(order.created_at) : new Date(),
+    updatedAt: order.updated_at ? new Date(order.updated_at) : new Date()
+  };
+}
+
+export const ordersApi = {
+  getAll: async (params?: { page?: number; limit?: number; status?: string; payment_status?: string }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.append('page', params.page.toString());
+    if (params?.limit) searchParams.append('limit', params.limit.toString());
+    if (params?.status) searchParams.append('status', params.status);
+    if (params?.payment_status) searchParams.append('payment_status', params.payment_status);
+    
+    const url = `/api/orders${searchParams.toString() ? '?' + searchParams.toString() : ''}`;
+    const response = await apiRequest("GET", url).then(res => res.json());
+    
+    return {
+      orders: response.data?.map(transformOrder) || [],
+      pagination: response.pagination || {},
+      total: response.total || 0
+    };
+  },
+  getById: async (orderId: string) => {
+    const response = await apiRequest("GET", `/api/orders/by-id/${orderId}`).then(res => res.json());
+    return response.data ? transformOrder(response.data) : null;
+  }
+};

@@ -9,6 +9,11 @@ const navItems = [
     icon: "fas fa-chart-bar",
   },
   {
+    path: "/orders",
+    label: "Orders",
+    icon: "fas fa-receipt",
+  },
+  {
     path: "/products",
     label: "Products",
     icon: "fas fa-box",

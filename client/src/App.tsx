@@ -6,6 +6,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/lib/auth";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
+import Orders from "@/pages/orders";
+import OrderDetails from "@/pages/order-details";
 import Products from "@/pages/products";
 import Categories from "@/pages/categories";
 import Sidebar from "@/components/layout/sidebar";
@@ -43,6 +45,16 @@ function Router() {
       <Route path="/" component={() => (
         <ProtectedRoute>
           <Dashboard />
+        </ProtectedRoute>
+      )} />
+      <Route path="/orders" component={() => (
+        <ProtectedRoute>
+          <Orders />
+        </ProtectedRoute>
+      )} />
+      <Route path="/orders/:orderId" component={() => (
+        <ProtectedRoute>
+          <OrderDetails />
         </ProtectedRoute>
       )} />
       <Route path="/products" component={() => (
