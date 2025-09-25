@@ -13,16 +13,6 @@ const navItems = [
     label: "Orders",
     icon: "fas fa-receipt",
   },
-  {
-    path: "/products",
-    label: "Products",
-    icon: "fas fa-box",
-  },
-  {
-    path: "/categories",
-    label: "Categories",
-    icon: "fas fa-tags",
-  },
 ];
 
 export default function Sidebar() {

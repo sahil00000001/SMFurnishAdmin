@@ -24,8 +24,8 @@ export default function Orders() {
     queryFn: () => ordersApi.getAll({ 
       page: currentPage, 
       limit, 
-      status: statusFilter || undefined,
-      payment_status: paymentStatusFilter || undefined
+      status: (statusFilter && statusFilter !== "all-status") ? statusFilter : undefined,
+      payment_status: (paymentStatusFilter && paymentStatusFilter !== "all-payment") ? paymentStatusFilter : undefined
     }),
   });
 
@@ -150,7 +150,7 @@ export default function Orders() {
                   <SelectValue placeholder="Filter by Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Status</SelectItem>
+                  <SelectItem value="all-status">All Status</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="processing">Processing</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
@@ -163,7 +163,7 @@ export default function Orders() {
                   <SelectValue placeholder="Payment Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Payment</SelectItem>
+                  <SelectItem value="all-payment">All Payment</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="paid">Paid</SelectItem>
                   <SelectItem value="verified">Verified</SelectItem>

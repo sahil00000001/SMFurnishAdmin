@@ -128,19 +128,19 @@ function transformOrder(order: any) {
     // Then override with normalized fields to ensure consistency
     id: order._id,
     orderId: order.order_id,
-    customerName: order.customer_name,
-    customerEmail: order.customer_email || null,
-    customerPhone: order.customer_phone || null,
-    customerAddress: order.customer_address || null,
+    customerName: order.customer?.name || order.user?.username || null,
+    customerEmail: order.customer?.email || order.user?.user_email || null,
+    customerPhone: order.customer?.phone || null,
+    customerAddress: order.customer?.address || null,
     status: order.status || 'pending',
-    paymentStatus: order.payment_status || 'pending',
-    totalAmount: order.total_amount || 0,
+    paymentStatus: order.payment?.status || 'pending',
+    totalAmount: order.pricing?.total || 0,
     orderDate: order.order_date ? new Date(order.order_date) : new Date(),
     items: order.items || [],
     notes: order.notes || null,
     deliveryDate: order.delivery_date ? new Date(order.delivery_date) : null,
-    createdAt: order.created_at ? new Date(order.created_at) : new Date(),
-    updatedAt: order.updated_at ? new Date(order.updated_at) : new Date()
+    createdAt: order.createdAt ? new Date(order.createdAt) : new Date(),
+    updatedAt: order.updatedAt ? new Date(order.updatedAt) : new Date()
   };
 }
 
@@ -156,13 +156,60 @@ export const ordersApi = {
     const response = await apiRequest("GET", url).then(res => res.json());
     
     return {
-      orders: response.data?.map(transformOrder) || [],
+      orders: response.orders?.map(transformOrder) || [],
       pagination: response.pagination || {},
-      total: response.total || 0
+      total: response.count || response.total || 0
     };
   },
   getById: async (orderId: string) => {
-    const response = await apiRequest("GET", `/api/orders/by-id/${orderId}`).then(res => res.json());
-    return response.data ? transformOrder(response.data) : null;
+    try {
+      // Try different API endpoint patterns
+      let response, orderData;
+      
+      try {
+        // Try pattern 1: /api/orders/{orderId}
+        response = await apiRequest("GET", `/api/orders/${orderId}`).then(res => res.json());
+        orderData = response.data || response.order || response;
+        if (orderData) return transformOrder(orderData);
+      } catch (error) {
+        console.log(`Pattern 1 failed for order ${orderId}`);
+      }
+      
+      try {
+        // Try pattern 2: /api/orders/by-id/{orderId}
+        response = await apiRequest("GET", `/api/orders/by-id/${orderId}`).then(res => res.json());
+        orderData = response.data || response.order || response;
+        if (orderData) return transformOrder(orderData);
+      } catch (error) {
+        console.log(`Pattern 2 failed for order ${orderId}`);
+      }
+      
+      try {
+        // Try pattern 3: /api/order/{orderId} (singular)
+        response = await apiRequest("GET", `/api/order/${orderId}`).then(res => res.json());
+        orderData = response.data || response.order || response;
+        if (orderData) return transformOrder(orderData);
+      } catch (error) {
+        console.log(`Pattern 3 failed for order ${orderId}`);
+      }
+      
+      // Fallback: Search through all orders to find the specific order
+      console.log(`All API patterns failed for order ${orderId}, trying fallback search`);
+      try {
+        const allOrdersResponse = await ordersApi.getAll({ limit: 1000 }); // Get all orders
+        const foundOrder = allOrdersResponse.orders.find((order: any) => order.orderId === orderId);
+        if (foundOrder) {
+          console.log(`Found order ${orderId} through fallback search`);
+          return foundOrder;
+        }
+      } catch (fallbackError) {
+        console.error(`Fallback search also failed for order ${orderId}:`, fallbackError);
+      }
+      
+      return null;
+    } catch (error) {
+      console.error(`Failed to fetch order ${orderId}:`, error);
+      return null;
+    }
   }
 };

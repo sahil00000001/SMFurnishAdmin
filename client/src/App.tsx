@@ -8,8 +8,6 @@ import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import Orders from "@/pages/orders";
 import OrderDetails from "@/pages/order-details";
-import Products from "@/pages/products";
-import Categories from "@/pages/categories";
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
 
@@ -55,16 +53,6 @@ function Router() {
       <Route path="/orders/:orderId" component={() => (
         <ProtectedRoute>
           <OrderDetails />
-        </ProtectedRoute>
-      )} />
-      <Route path="/products" component={() => (
-        <ProtectedRoute>
-          <Products />
-        </ProtectedRoute>
-      )} />
-      <Route path="/categories" component={() => (
-        <ProtectedRoute>
-          <Categories />
         </ProtectedRoute>
       )} />
       <Route component={() => (
